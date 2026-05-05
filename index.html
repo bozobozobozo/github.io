@@ -1,18 +1,102 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First GitHub Pages Site</title>
-    <style>
-        body { font-family: Arial; text-align: center; padding: 50px; }
-        h1 { color: #0366d6; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Bozo Control Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin:0; font-family:Arial; background:#101827; color:white; }
+    header { padding:20px; text-align:center; background:#17233a; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; padding:20px; }
+    .card { background:#1f2f4d; padding:20px; border-radius:16px; box-shadow:0 8px 20px #0006; }
+    button { width:100%; padding:14px; margin:6px 0; border:0; border-radius:10px; font-size:16px; cursor:pointer; }
+    .on { background:#21c55d; }
+    .off { background:#ef4444; color:white; }
+    .cmd { background:#38bdf8; }
+    input { width:100%; padding:12px; border-radius:8px; border:0; margin:6px 0; }
+    pre { background:#0b1220; padding:12px; border-radius:10px; overflow:auto; }
+  </style>
 </head>
 <body>
-    <h1>Hello World! 🚀</h1>
-    <p>This is my free website hosted on GitHub Pages.</p>
-    <p>Made by Barry</p>
+
+<header>
+  <h1>Bozo ESP32 / MQTT Dashboard</h1>
+  <p>GitHub Pages frontend + VPS command API</p>
+</header>
+
+<div class="grid">
+
+  <div class="card">
+    <h2>Output 1</h2>
+    <button class="on" onclick="sendCommand('device1/output1/on')">ON</button>
+    <button class="off" onclick="sendCommand('device1/output1/off')">OFF</button>
+  </div>
+
+  <div class="card">
+    <h2>Output 2</h2>
+    <button class="on" onclick="sendCommand('device1/output2/on')">ON</button>
+    <button class="off" onclick="sendCommand('device1/output2/off')">OFF</button>
+  </div>
+
+  <div class="card">
+    <h2>Camera</h2>
+    <button class="cmd" onclick="sendCommand('device1/camera/snapshot')">Snapshot</button>
+    <button class="cmd" onclick="sendCommand('device1/camera/stream')">Start Stream</button>
+  </div>
+
+  <div class="card">
+    <h2>Custom Command</h2>
+    <input id="customCmd" placeholder="Example: device1/output1/on">
+    <button class="cmd" onclick="sendCustom()">Send Custom Command</button>
+  </div>
+
+  <div class="card">
+    <h2>Status</h2>
+    <button class="cmd" onclick="loadStatus()">Refresh Status</button>
+    <pre id="statusBox">Ready...</pre>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = "https://webgate1.info/api";
+
+async function sendCommand(command) {
+  document.getElementById("statusBox").textContent = "Sending: " + command;
+
+  try {
+    const res = await fetch(API_BASE + "/send_mqtt.php", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ command: command })
+    });
+
+    const text = await res.text();
+    document.getElementById("statusBox").textContent = text;
+  } catch (err) {
+    document.getElementById("statusBox").textContent = "ERROR: " + err;
+  }
+}
+
+function sendCustom() {
+  const cmd = document.getElementById("customCmd").value.trim();
+  if (!cmd) return alert("Enter a command first");
+  sendCommand(cmd);
+}
+
+async function loadStatus() {
+  try {
+    const res = await fetch(API_BASE + "/esp32_status_api.php");
+    const text = await res.text();
+    document.getElementById("statusBox").textContent = text;
+  } catch (err) {
+    document.getElementById("statusBox").textContent = "Status error: " + err;
+  }
+}
+</script>
+
 </body>
 </html>
